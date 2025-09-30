@@ -24,6 +24,8 @@ class StaticMaps {
   constructor(options = {}) {
     this.options = options;
 
+    console.log("STATICMAPS FORK running");
+
     this.tileLayers = [];
 
     if (typeof this.options.tileLayers === 'undefined') {
