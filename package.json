@@ -11,6 +11,7 @@
   },
   "scripts": {
     "test": "mocha --require @babel/register",
+    "prepare": "npm run build",
     "build": "babel src --presets @babel/preset-env --plugins @babel/plugin-transform-runtime --out-dir dist",
     "prepublish": "npm run build"
   },
