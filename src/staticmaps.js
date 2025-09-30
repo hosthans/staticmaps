@@ -249,6 +249,108 @@ class StaticMaps {
     return Number(Math.round(px));
   }
 
+  /**
+   * Calculate geographic coordinates for all 4 corners of the image
+   * Returns an object with the corner coordinates
+   */
+  getBoundingBox() {
+    if (!this.zoom || !this.centerX || !this.centerY) {
+      throw new Error('Map must be rendered first before calculating bounding box');
+    }
+
+    // Calculate tile coordinates for image corners
+    const halfWidthInTiles = this.width / (2 * this.tileSize);
+    const halfHeightInTiles = this.height / (2 * this.tileSize);
+
+    // Corner tile coordinates
+    const topLeftX = this.centerX - halfWidthInTiles;
+    const topLeftY = this.centerY - halfHeightInTiles;
+    const topRightX = this.centerX + halfWidthInTiles;
+    const topRightY = this.centerY - halfHeightInTiles;
+    const bottomLeftX = this.centerX - halfWidthInTiles;
+    const bottomLeftY = this.centerY + halfHeightInTiles;
+    const bottomRightX = this.centerX + halfWidthInTiles;
+    const bottomRightY = this.centerY + halfHeightInTiles;
+
+    // Convert tile coordinates to geographic coordinates
+    return {
+      topLeft: {
+        lat: geoutils.yToLat(topLeftY, this.zoom),
+        lon: geoutils.xToLon(topLeftX, this.zoom)
+      },
+      topRight: {
+        lat: geoutils.yToLat(topRightY, this.zoom),
+        lon: geoutils.xToLon(topRightX, this.zoom)
+      },
+      bottomLeft: {
+        lat: geoutils.yToLat(bottomLeftY, this.zoom),
+        lon: geoutils.xToLon(bottomLeftX, this.zoom)
+      },
+      bottomRight: {
+        lat: geoutils.yToLat(bottomRightY, this.zoom),
+        lon: geoutils.xToLon(bottomRightX, this.zoom)
+      },
+      // Additional useful formats
+      extent: [
+        geoutils.xToLon(topLeftX, this.zoom),      // minLon
+        geoutils.yToLat(bottomLeftY, this.zoom),   // minLat
+        geoutils.xToLon(bottomRightX, this.zoom),  // maxLon
+        geoutils.yToLat(topRightY, this.zoom)      // maxLat
+      ],
+      // WGS84 Bounding Box format [west, south, east, north]
+      bbox: [
+        geoutils.xToLon(topLeftX, this.zoom),      // west
+        geoutils.yToLat(bottomLeftY, this.zoom),   // south
+        geoutils.xToLon(bottomRightX, this.zoom),  // east
+        geoutils.yToLat(topRightY, this.zoom)      // north
+      ]
+    };
+  }
+
+  /**
+   * Convert pixel coordinates on the image to geographic coordinates
+   * @param {number} pixelX - X pixel position on the image (0 = left edge)
+   * @param {number} pixelY - Y pixel position on the image (0 = top edge)
+   * @returns {object} Geographic coordinates {lat, lon}
+   */
+  pixelToGeo(pixelX, pixelY) {
+    if (!this.zoom || !this.centerX || !this.centerY) {
+      throw new Error('Map must be rendered first before converting pixels to coordinates');
+    }
+
+    // Convert pixel to tile coordinates
+    const tileX = this.centerX + (pixelX - this.width / 2) / this.tileSize;
+    const tileY = this.centerY + (pixelY - this.height / 2) / this.tileSize;
+
+    // Convert tile coordinates to geographic coordinates
+    return {
+      lat: geoutils.yToLat(tileY, this.zoom),
+      lon: geoutils.xToLon(tileX, this.zoom)
+    };
+  }
+
+  /**
+   * Convert geographic coordinates to pixel coordinates on the image
+   * @param {number} lat - Latitude
+   * @param {number} lon - Longitude
+   * @returns {object} Pixel coordinates {x, y}
+   */
+  geoToPixel(lat, lon) {
+    if (!this.zoom || !this.centerX || !this.centerY) {
+      throw new Error('Map must be rendered first before converting coordinates to pixels');
+    }
+
+    // Convert geographic coordinates to tile coordinates
+    const tileX = geoutils.lonToX(lon, this.zoom);
+    const tileY = geoutils.latToY(lat, this.zoom);
+
+    // Convert tile coordinates to pixel coordinates
+    return {
+      x: this.xToPx(tileX),
+      y: this.yToPx(tileY)
+    };
+  }
+
   async drawLayer(config) {
     if (!config || !config.tileUrl) {
       // Early return if we shouldn't draw a base layer
