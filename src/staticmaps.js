@@ -713,4 +713,4 @@ class StaticMaps {
 }
 
 export default StaticMaps;
-module.exports = StaticMaps;
+// module.exports = StaticMaps;
